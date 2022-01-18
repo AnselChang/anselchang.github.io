@@ -1,4 +1,4 @@
-//import { loadImage, drawImage, drawCircle } from './graphics.js';
+//import { loadImage, drawImage, drawCircle } from 'graphics.js';
 
 var KEYS = {
   "UP" : 38,
@@ -8,49 +8,89 @@ var KEYS = {
   "SPACEBAR" : 32
 }
 
-function loadImage(filename, width, height) {
-  let img;
-  if (width === undefined || height == undefined) {
-    img = new Image();
-  } else {
-    img = new Image(width , height);
+function getWidth() {
+  return window.ctx.canvas.width;
+}
+
+function getHeight() {
+  return window.ctx.canvas.height;
+}
+
+
+class Bullet {
+  constructor(x, y, direction, speed, startDistance = 0) {
+    console.log("spawned");
+
+    this.radius = 3;
+
+    this.xpos = x;
+    this.ypos = y;
+    let dir = Math.PI/180 * (direction - 90);
+    this.xvel = speed * Math.cos(dir);
+    this.yvel = speed * Math.sin(dir);
+
+    this.xpos += startDistance * Math.cos(dir);
+    this.ypos += startDistance * Math.sin(dir);
   }
-  img.src = filename;
-  return img;
+
+  // Move the bullet. Return true if out of bounds
+  move() {
+
+    this.xpos += this.xvel;
+    this.ypos += this.yvel;
+
+
+    if (this.xpos + this.radius < 0 || this.xpos > getWidth()) return true;
+    if (this.ypos + this.radius < 0 || this.ypos > getHeight()) return true;
+    return false;
+  }
+
+  draw(ctx) {
+    drawCircle(ctx, this.xpos, this.ypos, this.radius, 'red');
+  }
+
 }
 
-// draw rotated image
-// https://stackoverflow.com/questions/17411991/html5-canvas-rotate-image
-function drawImage(ctx, image, x, y, cx, cy, rotation, scale = 1) {
-    ctx.setTransform(scale, 0, 0, scale, x, y); // sets scale and origin
-    ctx.rotate(rotation);
-    ctx.drawImage(image, -cx*image.width, -cy*image.height);
-    ctx.setTransform(1,0,0,1,0,0);
-}
+class BulletManager {
+  constructor() {
+    this.bullets = [];
+  }
+  addBullet(x, y, direction, speed, startDistance = 0) {
+    this.bullets.push(new Bullet(x, y, direction, speed, startDistance));
+  }
 
-function drawCircle(context, centerX, centerY, radius, color = 'black') {
-  context.beginPath();
-  context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-  context.fillStyle = color;
-  context.fill();
-  context.lineWidth = 5;
-  context.strokeStyle = color;
-  context.stroke();
+  // update bullet positions and remove any off the screen
+  update() {
+    for (var i = this.bullets.length - 1; i >= 0; i--) {
+      if (this.bullets[i].move()) {
+          this.bullets.splice(i, 1);
+          console.log("bullet deleted");
+      }
+    }
+  }
+
+  draw(ctx) {
+    console.log("size: " + this.bullets.length);
+    for (var i = 0; i < this.bullets.length; i++) {
+      this.bullets[i].draw(ctx);
+    }
+  }
+
+
 }
 
 class Player {
-    constructor(size, width, height) {
+    constructor(size) {
       this.size = size;
-      this.sWidth = width
-      this.sHeight = height
 
       // spawn at center of screen
-      this.xpos = width/2;
-      this.ypos = height/2;
+      this.xpos = getWidth()/2;
+      this.ypos = getHeight()/2;
 
       this.SPEED = 0.5;
       this.DIRECTION_SPEED = 2;
       this.FRICTION = 0.99;
+      this.BULLET_SPEED = 10;
 
       // spawn with 0 velocity
       this.xvel = 0;
@@ -65,6 +105,9 @@ class Player {
       // this.image1.src = "spaceship.png"
       // this.image2 = new Image(60,60);
       // this.image2.src = "spaceship2.png"
+
+      this.bulletCycle = 10;
+      this.currentTick = this.bulletCycle;
 
     }
 
@@ -99,8 +142,8 @@ class Player {
       this.ypos += this.yvel;
 
       // Collision with side walls
-      if (this.xpos + this.size > this.sWidth) {
-        this.xpos = this.sWidth - this.size;
+      if (this.xpos + this.size > getWidth()) {
+        this.xpos = getWidth() - this.size;
         this.xvel = 0;
       } else if (this.xpos < 0) {
         this.xpos = 0;
@@ -108,12 +151,22 @@ class Player {
       }
 
       // Collision with top/bottom walls
-      if (this.ypos + this.size > this.sHeight) {
-        this.ypos = this.sHeight - this.size;
+      if (this.ypos + this.size > getHeight()) {
+        this.ypos = getHeight() - this.size;
         this.yvel = 0;
       } else if (this.ypos < 0) {
         this.ypos = 0;
         this.yvel = 0;
+      }
+
+      // Handle bullet creation
+      if (this.currentTick < this.bulletCycle) {
+        this.currentTick++;
+      }
+      if (window.keyHandler.isPressed("SPACEBAR") && this.currentTick === this.bulletCycle) {
+        this.currentTick = 0;
+        window.bulletManager.addBullet(this.xpos, this.ypos, this.direction, this.BULLET_SPEED, this.image1.height*1.3)
+
       }
 
     }
@@ -154,7 +207,8 @@ function init() {
   window.ctx = canvas.getContext('2d');
 
   window.keyHandler = new KeyHandler();
-  window.player = new Player(40, window.canvas.width, window.canvas.height);
+  window.bulletManager = new BulletManager();
+  window.player = new Player(10, window.canvas.width, window.canvas.height);
 
   window.spaceBackground = loadImage("space.jpeg");
 
@@ -165,17 +219,10 @@ function init() {
 function executeFrame() {
 
   window.player.tick();
-  draw();
+  window.bulletManager.update();
 
-  // Queue the exeuction of the next frame
-  window.requestAnimationFrame(executeFrame);
-
-}
-
-function draw() {
-
-  player.sWidth = window.ctx.canvas.width  = window.innerWidth;
-  player.sHeight = window.ctx.canvas.height = window.innerHeight;
+  window.ctx.canvas.width  = window.innerWidth;
+  window.ctx.canvas.height = window.innerHeight;
 
   // clear screen and draw background
   window.ctx.clearRect(0,0,window.canvas.width, window.canvas.height);
@@ -183,9 +230,9 @@ function draw() {
 
 
   window.player.draw(window.ctx);
-  drawCircle(window.ctx, 300,300, 50, 'red');
+  window.bulletManager.draw(window.ctx);
 
-  window.ctx.font = '60px serif';
-  //window.ctx.fillText(window.keyHandler.get(),200,200);
+  // Queue the exeuction of the next frame
+  window.requestAnimationFrame(executeFrame);
 
 }
