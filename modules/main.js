@@ -127,6 +127,7 @@ class Bullet {
       console.log("collision");
       return true; // If crash, delete bullet
     }
+    
 
     this.xvel += delta[0];
     this.yvel += delta[1];
