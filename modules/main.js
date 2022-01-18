@@ -1,4 +1,4 @@
-import { loadImage, drawImage, drawCircle } from './modules/graphics.js';
+import { loadImage, drawImage, drawCircle } from './graphics.js';
 
 var KEYS = {
   "UP" : 38,
@@ -117,6 +117,8 @@ class KeyHandler {
 
 
 function init() {
+
+  console.log("start");
 
   window.canvas = document.getElementById('tutorial');
   window.ctx = canvas.getContext('2d');
