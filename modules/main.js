@@ -54,8 +54,16 @@ class PlanetarySystem {
   }
 
   createPlanets() {
-    this.planets.push(new Planet(500, 300, 170, "mars.png", 0.2));
-    this.planets.push(new Planet(900, 500, 100, "moon.png", 0.1));
+    this.planets.push(new Planet(300, 350, 170, "mars.png", 0.2));
+    this.planets.push(new Planet(700, 600, 100, "moon.png", 0.1));
+    this.planets.push(new Planet(1100, 300, 200, "venus.png", 0.2));
+
+    this.planets.push(new Planet(660, 150, 30, "asteroid.png", 0.07));
+    this.planets.push(new Planet(350, 750, 30, "asteroid.png", 0.07));
+    this.planets.push(new Planet(1200, 700, 30, "asteroid.png", 0.07));
+    this.planets.push(new Planet(1400, 600, 30, "asteroid.png", 0.07));
+    this.planets.push(new Planet(1350, 800, 30, "asteroid.png", 0.07));
+    this.planets.push(new Planet(1300, 200, 30, "asteroid.png", 0.07));
   }
 
   // For each planet, approximate formula = k * mass / radius^2
@@ -115,7 +123,11 @@ class Bullet {
 
     // Yield to the forces of gravity
     let delta = window.planets.getFieldVectorAt(this.xpos, this.ypos);
-    if (delta === null) return true; // If crash, delete bullet
+    if (delta === null) {
+      console.log("collision");
+      return true; // If crash, delete bullet
+    }
+
     this.xvel += delta[0];
     this.yvel += delta[1];
 
