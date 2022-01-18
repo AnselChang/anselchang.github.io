@@ -27,3 +27,10 @@ function drawCircle(context, centerX, centerY, radius, color = 'black') {
   context.strokeStyle = color;
   context.stroke();
 }
+
+function drawText(ctx, font, text, color, x, y) {
+  ctx.font = font;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, y);
+}
