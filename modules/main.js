@@ -27,14 +27,29 @@ class Planet {
     this.x = x;
     this.y = y;
     this.mass = mass;
-    this.image = loadImage(image);
+    var self = this;
+    this.image = new Image();
+    this.image.onload = function() {
+
+      console.log("" + this.width);
+
+      self.radius = self.scale / 4 * (this.width + this.height);
+
+      // position at top-left corner
+      self.lx = self.x - this.width / 2 * self.scale;
+      self.ly = self.y - this.height / 2 * self.scale;
+    }
+    this.image.src = image;
     this.scale = scale;
     this.radius = scale / 4 * (this.image.width + this.image.height);
 
     // position at top-left corner
     this.lx = this.x - this.image.width / 2 * scale;
     this.ly = this.y - this.image.height / 2 * scale;
+
+    console.log("" + this.image.width);
   }
+
 
   draw(ctx) {
     drawImage(ctx, this.image, this.lx, this.ly, 0, 0, 0, this.scale);
@@ -76,7 +91,10 @@ class PlanetarySystem {
       let magnitude = Math.sqrt(distSquared);
 
       // crash onto planet
-      if (magnitude < this.planets[i].radius) return null;
+      if (magnitude < this.planets[i].radius) {
+        console.log("small");
+        return null;
+      }
 
       let force = this.CONSTANT * this.planets[i].mass / (distSquared);
 
@@ -127,7 +145,7 @@ class Bullet {
       console.log("collision");
       return true; // If crash, delete bullet
     }
-    
+
 
     this.xvel += delta[0];
     this.yvel += delta[1];
@@ -298,6 +316,11 @@ function init() {
 
   window.canvas = document.getElementById('tutorial');
   window.ctx = canvas.getContext('2d');
+
+  window.ctx.canvas.width  = window.innerWidth;
+  window.ctx.canvas.height = window.innerHeight;
+
+  console.log("" + window.ctx.canvas.width + " " + window.ctx.canvas.height);
 
   window.keyHandler = new KeyHandler();
   window.bulletManager = new BulletManager();
