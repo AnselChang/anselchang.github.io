@@ -22,34 +22,65 @@ function getDistanceSquared(x1,y1,x2,y2) {
   return a*a + b*b;
 }
 
+// Generate a closure lambda for a parametrized circular orbit
+function generateCircularOrbit(planet, radius, period, pstart) {
+  let t = pstart;
+  return function() {
+    t = (t + 1) % period;
+    let theta = (t-pstart) * 2*Math.PI / period;
+    return [planet.x + radius*Math.cos(theta), planet.y + radius*Math.sin(theta)]
+  }
+}
+
 class Planet {
-  constructor(x, y, mass, image, scale) {
-    this.x = x;
-    this.y = y;
+  constructor(mass, image, scale, isParametric, parametric, period) {
+
+    this.isParametric = isParametric;
+
+    if (isParametric) {
+      this.para = parametric;
+      this.period = period;
+      [this.x, this.y] = this.para(0);
+
+    } else {
+      [this.x, this.y] = parametric;
+    }
+    console.log(""+this.x + "a" + this.y);
+
     this.mass = mass;
+    this.scale = scale;
+
     var self = this;
     this.image = new Image();
     this.image.onload = function() {
 
-      console.log("" + this.width);
-
+      self.findPosition();
       self.radius = self.scale / 4 * (this.width + this.height);
-
-      // position at top-left corner
-      self.lx = self.x - this.width / 2 * self.scale;
-      self.ly = self.y - this.height / 2 * self.scale;
     }
     this.image.src = image;
-    this.scale = scale;
-    this.radius = scale / 4 * (this.image.width + this.image.height);
+    this.radius = 100;
 
-    // position at top-left corner
-    this.lx = this.x - this.image.width / 2 * scale;
-    this.ly = this.y - this.image.height / 2 * scale;
+    this.findPosition();
 
-    console.log("" + this.image.width);
   }
 
+  // Update position of planet from parametric equations
+  update() {
+
+    if (this.isParametric) {
+
+      [this.x, this.y] = this.para();
+
+      this.findPosition();
+    }
+
+  }
+
+  findPosition()  { // position at top-left corner
+    this.lx = this.x - this.image.width / 2 * this.scale;
+    this.ly = this.y - this.image.height / 2 * this.scale;
+
+  }
 
   draw(ctx) {
     drawImage(ctx, this.image, this.lx, this.ly, 0, 0, 0, this.scale);
@@ -69,16 +100,28 @@ class PlanetarySystem {
   }
 
   createPlanets() {
-    this.planets.push(new Planet(300, 350, 170, "mars.png", 0.2));
-    this.planets.push(new Planet(700, 600, 100, "moon.png", 0.1));
-    this.planets.push(new Planet(1100, 300, 200, "venus.png", 0.2));
+    this.planets.push(new Planet(170, "mars.png", 0.2, false, [300, 350]));
+    this.planets.push(new Planet(100, "moon.png", 0.1, false, [700, 600]));
 
-    this.planets.push(new Planet(660, 150, 30, "asteroid.png", 0.07));
-    this.planets.push(new Planet(350, 750, 30, "asteroid.png", 0.07));
-    this.planets.push(new Planet(1200, 700, 30, "asteroid.png", 0.07));
-    this.planets.push(new Planet(1400, 600, 30, "asteroid.png", 0.07));
-    this.planets.push(new Planet(1350, 800, 30, "asteroid.png", 0.07));
-    this.planets.push(new Planet(1300, 200, 30, "asteroid.png", 0.07));
+
+    this.planets.push(new Planet(30, "asteroid.png", 0.07, false, [660, 150]));
+    this.planets.push(new Planet(30, "asteroid.png", 0.07, false, [350, 750]));
+    this.planets.push(new Planet(30, "asteroid.png", 0.07, false, [1200, 700]));
+    this.planets.push(new Planet(30, "asteroid.png", 0.07, false, [1400, 600]));
+    this.planets.push(new Planet(30, "asteroid.png", 0.07, false, [1350, 800]));
+
+    let venus = new Planet(200, "venus.png", 0.2, false, [1100, 300]);
+    this.planets.push(venus);
+    console.log(venus);
+    let orbit = generateCircularOrbit(venus, 200, 300, 50);
+    console.log(orbit);
+    this.planets.push(new Planet(30, "asteroid.png", 0.07, true, orbit, ));
+  }
+
+  updatePlanets() {
+    for (var i = 0; i < this.planets.length; i++) {
+      this.planets[i].update();
+    }
   }
 
   // For each planet, approximate formula = k * mass / radius^2
@@ -335,11 +378,13 @@ function init() {
 
 function executeFrame() {
 
+  window.ctx.canvas.width  = window.innerWidth;
+  window.ctx.canvas.height = window.innerHeight;
+
+  window.planets.updatePlanets();
   window.player.tick();
   window.bulletManager.update();
 
-  window.ctx.canvas.width  = window.innerWidth;
-  window.ctx.canvas.height = window.innerHeight;
 
   // clear screen and draw background
   window.ctx.clearRect(0,0,window.canvas.width, window.canvas.height);
