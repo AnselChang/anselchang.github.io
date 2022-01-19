@@ -288,6 +288,7 @@ class BulletManager {
   }
 
 
+
 }
 
 class Player {
@@ -298,7 +299,7 @@ class Player {
       this.ypos = getHeight()/2;
 
       this.SPEED = 0.6;
-      this.BOOSTER_SPEED = 2;
+      this.BOOSTER_SPEED = 2.2;
       this.BULLET_SPEED = 15;
 
       // spawn with 0 velocity
