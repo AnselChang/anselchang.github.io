@@ -1,9 +1,20 @@
-function loadImage(filename, width, height) {
+function loadImage(loader, filename, width, height, onload = undefined) {
+
+  loader.start();
+  console.log("start load " + filename);
+
   let img;
   if (width === undefined || height == undefined) {
     img = new Image();
   } else {
     img = new Image(width , height);
+  }
+  img.onload = function() {
+    console.log("onload " + filename);
+    loader.finish();
+    if (onload !== undefined) {
+      onload();
+    }
   }
   img.src = filename;
   return img;
