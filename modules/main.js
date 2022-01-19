@@ -287,8 +287,6 @@ class BulletManager {
     }
   }
 
-
-
 }
 
 class Player {
