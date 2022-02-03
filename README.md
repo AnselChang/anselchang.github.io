@@ -1,4 +1,4 @@
-# anselchang.github.io
+# Orbit Simulator
 
 Check out the project here!
 https://anselchang.github.io/
